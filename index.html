@@ -1106,6 +1106,109 @@ function snoozeBtn(){
   if(s){s.textContent='Snoozed 15 min — coming back soon';}
   setTimeout(function(){if(s)s.textContent='With lunch · Due in 15 min';},2200);
 }
+   <style>
+  /* Hide the desktop-only left navigation */
+  .side-panel {
+    display: none !important;
+  }
+
+  .shell {
+    gap: 0 !important;
+    justify-content: center !important;
+  }
+
+  .phone:hover {
+    transform: none !important;
+  }
+
+  /* Make it feel like a real mobile prototype on small screens */
+  @media (max-width: 480px) {
+    html, body {
+      background: var(--surface) !important;
+    }
+
+    .shell {
+      padding: 0 !important;
+    }
+
+    .shell::before {
+      display: none !important;
+    }
+
+    .phone {
+      width: 100vw !important;
+      height: 100vh !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+</style>
+
+<script>
+(function () {
+  var validScreens = ['splash', 'lang', 'cond', 'meds', 'success', 'today', 'learn', 'mood', 'care'];
+
+  function each(list, fn) {
+    Array.prototype.forEach.call(list, fn);
+  }
+
+  function isValidScreen(name) {
+    return validScreens.indexOf(name) !== -1;
+  }
+
+  function openScreen(name) {
+    if (typeof goScreen === 'function' && isValidScreen(name)) {
+      goScreen(name);
+    }
+  }
+
+  function connect(selector, target) {
+    each(document.querySelectorAll(selector), function (el) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function () {
+        openScreen(target);
+      });
+    });
+  }
+
+  /* Upgrade your existing screen switcher so URL + browser back work */
+  if (typeof goScreen === 'function') {
+    var originalGoScreen = goScreen;
+
+    window.goScreen = function (name, navEl) {
+      originalGoScreen(name, navEl);
+
+      if (isValidScreen(name) && window.location.hash !== '#' + name) {
+        window.location.hash = name;
+      }
+    };
+  }
+
+  window.addEventListener('load', function () {
+    var firstScreen = (window.location.hash || '').replace('#', '');
+
+    if (isValidScreen(firstScreen)) {
+      openScreen(firstScreen);
+    } else if (window.currentScreen) {
+      history.replaceState(null, '', '#' + window.currentScreen);
+    } else {
+      history.replaceState(null, '', '#splash');
+    }
+
+    /* Connect a few currently non-wired clickable items */
+    connect('.ai-link', 'mood');
+    connect('.ca-link', 'care');
+  });
+
+  window.addEventListener('hashchange', function () {
+    var nextScreen = window.location.hash.replace('#', '');
+    if (isValidScreen(nextScreen) && nextScreen !== window.currentScreen) {
+      openScreen(nextScreen);
+    }
+  });
+})();
+</script>
+
 </script>
 </body>
 </html>
