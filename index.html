@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MedCompanion</title>
+<style>
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
+
+/* ═══════════════════════════════════
+   TOKENS
+═══════════════════════════════════ */
+:root {
+  --blue:       #0063C3;
+  --blue-d:     #004A96;
+  --blue-l:     #D6E8F9;
+  --blue-m:     #82C0FF;
+  --blue-gl:    rgba(0,99,195,0.12);
+  --green:      #16A35A;
+  --green-l:    #E0F5E9;
+  --amber:      #D97706;
+  --amber-l:    #FEF5E0;
+  --coral:      #E8574A;
+  --coral-l:    #FEF0EE;
+  --purple:     #7C3AED;
+  --purple-l:   #F0EDFE;
+  --ink:        #0F172A;
+  --ink-60:     rgba(15,23,42,0.60);
+  --ink-35:     rgba(15,23,42,0.35);
+  --ink-10:     rgba(15,23,42,0.10);
+  --ink-06:     rgba(15,23,42,0.06);
+  --white:      #FFFFFF;
+  --surface:    #F4F7FB;
+  --surface-2:  #EBF1F8;
+  --sans: 'Satoshi', system-ui, sans-serif;
+
+  /* screen sizes */
+  --ph-w: 375px;
+  --ph-h: 812px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--sans);
+  background: #080C14;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════
+   SHELL
+═══════════════════════════════════ */
+.shell {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 20px;
+  position: relative;
+}
+
+/* background glow */
+.shell::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 500px at 30% 50%, rgba(0,99,195,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 350px at 75% 30%, rgba(124,58,237,0.06) 0%, transparent 70%);
+}
+
+/* ═══════════════════════════════════
+   PHONE SHELL
+═══════════════════════════════════ */
+.phone {
+  width: var(--ph-w);
+  height: var(--ph-h);
+  border-radius: 44px;
+  overflow: hidden;
+  background: var(--surface);
+  position: relative;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.18),
+    0 0 0 8px #141C2A,
+    0 0 0 9px #1E2A3A,
+    0 32px 100px rgba(0,0,0,0.75),
+    0 8px 32px rgba(0,0,0,0.5);
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.phone:hover { transform: translateY(-4px); }
+
+/* dynamic island */
+.phone::before {
+  content: '';
+  position: absolute; top: 12px; left: 50%;
+  transform: translateX(-50%);
+  width: 120px; height: 32px;
+  background: #141C2A;
+  border-radius: 18px;
+  z-index: 200;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* status bar */
+.status {
+  position: absolute; top: 0; left: 0; right: 0; height: 52px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 0 26px 8px;
+  z-index: 190; pointer-events: none;
+  font-family: var(--sans);
+}
+.st-time { font-size: 14px; font-weight: 600; color: var(--ink); }
+.st-icons { font-size: 11px; color: var(--ink); opacity: 0.5; letter-spacing: -1px; }
+
+/* screen container */
+.screens {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+}
+.screen {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: none;
+  opacity: 0; pointer-events: none;
+  transform: translateX(24px);
+  transition: opacity 0.35s cubic-bezier(0.16,1,0.3,1),
+              transform 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.screen::-webkit-scrollbar { display: none; }
+.screen.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+.screen.out { transform: translateX(-24px); }
+
+/* bottom nav */
+.bottom-nav {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 72px;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--ink-06);
+  display: flex; align-items: center;
+  padding: 0 8px 10px;
+  z-index: 100;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  cursor: pointer; padding: 6px 0;
+  transition: all 0.2s;
+}
+.nav-icon {
+  width: 30px; height: 30px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.nav-label {
+  font-size: 10px; font-weight: 500;
+  color: var(--ink-35);
+  transition: color 0.15s;
+}
+.nav-item.on .nav-icon { background: var(--blue-l); transform: scale(1.1); }
+.nav-item.on .nav-label { color: var(--blue); font-weight: 700; }
+
+/* ═══════════════════════════════════
+   COMMON COMPONENTS
+═══════════════════════════════════ */
+/* headers */
+.hdr {
+  padding: 54px 20px 20px; flex-shrink: 0;
+}
+.hdr-today  { background: linear-gradient(165deg,#061A3A 0%,#0D2952 100%); }
+.hdr-learn  { background: linear-gradient(165deg,#07160F 0%,#0E2A1A 100%); }
+.hdr-mood   { background: linear-gradient(165deg,#100720 0%,#1C0D38 100%); }
+.hdr-care   { background: linear-gradient(165deg,#071A0E 0%,#0F2A18 100%); }
+
+.hdr-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.hdr-greet { font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:0.04em; margin-bottom:2px; }
+.hdr-name { font-size:20px; font-weight:700; color:white; }
+.hdr-av {
+  width:36px; height:36px; border-radius:50%;
+  background:linear-gradient(135deg,var(--blue-m),var(--blue));
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:white;
+}
+
+/* glass card */
+.glass {
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:16px;
+}
+
+/* body area */
+.body { padding:16px 16px 90px; }
+
+/* section header */
+.sec { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.sec-t { font-size:13px; font-weight:700; color:var(--ink); }
+.sec-l { font-size:11px; font-weight:500; color:var(--blue); cursor:pointer; }
+
+/* card base */
+.card {
+  background:var(--white);
+  border:1px solid var(--ink-06);
+  border-radius:16px;
+  overflow:hidden;
+  transition:all 0.2s;
+}
+.card:hover { border-color:rgba(0,99,195,0.25); transform:translateY(-1px); box-shadow:0 6px 24px rgba(0,99,195,0.08); }
+
+/* ═══════════════════════════════════
+   SCREEN 0 — SPLASH
+═══════════════════════════════════ */
+#s-splash {
+  background:linear-gradient(175deg,#06122A 0%,#0D1E3E 50%,#080E1C 100%);
+}
+.splash-inner {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center;
+  padding:80px 32px 80px; min-height:100%;
+}
+.splash-orb {
+  width:96px; height:96px; border-radius:28px;
+  background:linear-gradient(135deg,#82C0FF,var(--blue));
+  display:flex; align-items:center; justify-content:center;
+  font-size:44px; margin-bottom:32px;
+  box-shadow:
+    0 0 0 1px rgba(130,192,255,0.4),
+    0 0 60px rgba(0,99,195,0.5),
+    0 0 120px rgba(0,99,195,0.2);
+  animation:orb-pulse 3s ease-in-out infinite;
+}
+@keyframes orb-pulse {
+  0%,100% { box-shadow:0 0 0 1px rgba(130,192,255,0.4),0 0 60px rgba(0,99,195,0.5),0 0 120px rgba(0,99,195,0.2); }
+  50%      { box-shadow:0 0 0 1px rgba(130,192,255,0.6),0 0 80px rgba(0,99,195,0.7),0 0 160px rgba(0,99,195,0.3); }
+}
+.splash-logo { font-size:22px; font-weight:700; color:white; margin-bottom:4px; letter-spacing:-0.02em; }
+.splash-tag  { font-size:11px; color:rgba(255,255,255,0.35); letter-spacing:0.08em; margin-bottom:28px; }
+.splash-h {
+  font-size:34px; font-weight:900; color:white;
+  line-height:1.1; letter-spacing:-0.03em;
+  margin-bottom:14px;
+}
+.splash-h span { color:var(--blue-m); }
+.splash-p {
+  font-size:14px; font-weight:300; color:rgba(255,255,255,0.5);
+  line-height:1.7; margin-bottom:36px; max-width:280px;
+}
+.splash-chips { display:flex; gap:7px; justify-content:center; flex-wrap:wrap; margin-bottom:40px; }
+.splash-chip {
+  font-size:10px; font-weight:500; padding:4px 11px; border-radius:20px;
+  border:1px solid rgba(130,192,255,0.25); color:rgba(130,192,255,0.7);
+}
+.btn-splash {
+  width:100%; padding:16px; border-radius:16px; border:none;
+  background:var(--blue); color:white;
+  font-family:var(--sans); font-size:16px; font-weight:700;
+  cursor:pointer; letter-spacing:-0.01em;
+  box-shadow:0 8px 32px rgba(0,99,195,0.4);
+  transition:all 0.2s; margin-bottom:12px;
+}
+.btn-splash:hover { transform:translateY(-2px); box-shadow:0 12px 40px rgba(0,99,195,0.55); }
+.splash-sign { font-size:12px; color:rgba(255,255,255,0.25); cursor:pointer; }
+
+/* ═══════════════════════════════════
+   SCREEN 1 — ONBOARDING LANGUAGE
+═══════════════════════════════════ */
+#s-lang { background:var(--surface); }
+.ob-inner { padding:52px 20px 90px; min-height:100%; display:flex; flex-direction:column; }
+.ob-back { background:none; border:none; cursor:pointer; font-family:var(--sans); font-size:13px; font-weight:500; color:var(--ink-35); margin-bottom:14px; display:flex; align-items:center; gap:5px; transition:color 0.15s; width:fit-content; }
+.ob-back:hover { color:var(--blue); }
+.ob-step { font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--blue); margin-bottom:8px; }
+.ob-h { font-size:26px; font-weight:900; color:var(--ink); line-height:1.1; letter-spacing:-0.02em; margin-bottom:6px; }
+.ob-h em { font-style:italic; color:var(--blue); font-weight:300; }
+.ob-p { font-size:13px; font-weight:400; color:var(--ink-60); line-height:1.65; margin-bottom:22px; }
+
+.lang-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:18px; }
+.lang-chip {
+  padding:12px 11px; border-radius:14px;
+  border:1.5px solid var(--ink-10);
+  background:var(--white); cursor:pointer;
+  display:flex; align-items:center; gap:9px;
+  transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.lang-chip:hover { border-color:rgba(0,99,195,0.35); transform:translateY(-2px); }
+.lang-chip.on { border-color:var(--blue); background:var(--blue-l); box-shadow:0 4px 16px rgba(0,99,195,0.15); }
+.lang-flag { font-size:20px; }
+.lang-nm { font-size:12px; font-weight:700; color:var(--ink); }
+.lang-nat { font-size:10px; color:var(--ink-35); }
+.lang-chk { margin-left:auto; width:16px; height:16px; border-radius:50%; background:var(--blue); display:none; align-items:center; justify-content:center; color:white; font-size:9px; font-weight:700; }
+.lang-chip.on .lang-chk { display:flex; }
+
+.lit-section { margin-bottom:20px; }
+.lit-label { font-size:11px; font-weight:700; color:var(--ink); margin-bottom:10px; }
+.lit-stack { display:flex; flex-direction:column; gap:7px; }
+.lit-row {
+  display:flex; align-items:center; gap:11px;
+  padding:11px 13px; border-radius:12px;
+  border:1.5px solid var(--ink-10); background:var(--white);
+  cursor:pointer; transition:all 0.15s;
+}
+.lit-row:hover { border-color:rgba(0,99,195,0.3); }
+.lit-row.on { border-color:var(--blue); background:var(--blue-l); }
+.lit-icon { font-size:16px; }
+.lit-txt { font-size:12px; font-weight:600; color:var(--ink); }
+
+.ob-btn {
+  width:100%; padding:15px; border-radius:15px; border:none;
+  background:var(--blue); color:white;
+  font-family:var(--sans); font-size:15px; font-weight:700;
+  cursor:pointer; margin-top:auto;
+  box-shadow:0 6px 24px rgba(0,99,195,0.3);
+  transition:all 0.15s; letter-spacing:-0.01em;
+}
+.ob-btn:hover { background:var(--blue-d); transform:translateY(-1px); }
+.ob-skip { background:none; border:none; color:var(--ink-35); font-family:var(--sans); font-size:12px; font-weight:500; cursor:pointer; padding:10px; width:100%; margin-top:7px; transition:color 0.15s; }
+.ob-skip:hover { color:var(--blue); }
+
+/* ═══════════════════════════════════
+   SCREEN 2 — ONBOARDING CONDITIONS
+═══════════════════════════════════ */
+#s-cond { background:var(--surface); }
+.cond-stack { display:flex; flex-direction:column; gap:8px; }
+.cond-row {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 15px; border-radius:14px;
+  border:1.5px solid var(--ink-10); background:var(--white);
+  cursor:pointer; transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.cond-row:hover { border-color:rgba(0,99,195,0.3); transform:translateX(3px); }
+.cond-row.on { border-color:var(--blue); background:var(--blue-l); transform:translateX(5px); box-shadow:0 4px 16px rgba(0,99,195,0.1); }
+.cond-em { font-size:22px; flex-shrink:0; }
+.cond-info { flex:1; }
+.cond-nm { font-size:13px; font-weight:700; color:var(--ink); }
+.cond-sub { font-size:10px; color:var(--ink-35); margin-top:1px; }
+.cond-box {
+  width:20px; height:20px; border-radius:50%;
+  border:1.5px solid var(--ink-35);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; flex-shrink:0;
+  transition:all 0.15s;
+}
+.cond-row.on .cond-box { background:var(--blue); border-color:var(--blue); color:white; }
+
+/* ═══════════════════════════════════
+   SCREEN 3 — ONBOARDING MEDICATIONS
+═══════════════════════════════════ */
+#s-meds { background:var(--surface); }
+.med-card-ob {
+  background:var(--white); border-radius:16px;
+  border:1px solid var(--ink-06); padding:15px; margin-bottom:10px;
+}
+.mc-head { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
+.mc-pip { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.mc-name { font-size:14px; font-weight:700; color:var(--ink); flex:1; }
+.mc-remove { background:none; border:none; cursor:pointer; color:var(--ink-35); font-size:20px; line-height:1; transition:color 0.15s; }
+.mc-remove:hover { color:var(--coral); }
+.mc-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+.mc-fld { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.mc-lbl { font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-35); }
+.mc-val {
+  padding:9px 11px; border-radius:10px;
+  border:1.5px solid var(--ink-10); background:var(--surface);
+  font-family:var(--sans); font-size:12px; font-weight:500; color:var(--ink);
+  width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.add-med-btn {
+  width:100%; padding:13px; border-radius:14px;
+  border:2px dashed var(--ink-35);
+  background:transparent; color:var(--ink-35);
+  font-family:var(--sans); font-size:13px; font-weight:600;
+  cursor:pointer; display:flex; align-items:center;
+  justify-content:center; gap:7px;
+  transition:all 0.15s;
+}
+.add-med-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-gl); }
+
+/* ═══════════════════════════════════
+   SCREEN 4 — TODAY
+═══════════════════════════════════ */
+/* ring card */
+.ring-card { display:flex; align-items:center; gap:14px; padding:14px; }
+.ring-wrap { position:relative; width:60px; height:60px; flex-shrink:0; }
+.ring-wrap svg { width:60px; height:60px; transform:rotate(-90deg); }
+.r-bg  { fill:none; stroke:rgba(255,255,255,0.1); stroke-width:5; }
+.r-fill { fill:none; stroke:var(--blue-m); stroke-width:5; stroke-linecap:round; stroke-dasharray:157; stroke-dashoffset:20; }
+.ring-ctr { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ring-pct { font-size:14px; font-weight:700; color:white; }
+.ring-lbl { font-size:7px; color:rgba(255,255,255,0.5); }
+.ring-meta h3 { font-size:13px; font-weight:700; color:white; margin-bottom:3px; }
+.ring-meta p { font-size:11px; color:rgba(255,255,255,0.5); line-height:1.5; }
+.streak-row { display:flex; gap:3px; margin-top:7px; }
+.spip { width:18px; height:18px; border-radius:5px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:7px; font-weight:700; color:rgba(255,255,255,0.35); }
+.spip.done { background:rgba(0,99,195,0.55); color:rgba(255,255,255,0.9); }
+.spip.today { background:var(--blue-m); color:#071A40; }
+
+/* next dose */
+.next-dose {
+  background:linear-gradient(135deg,var(--blue),#1872D9);
+  border-radius:18px; padding:15px; margin-bottom:13px;
+  position:relative; overflow:hidden;
+  border:1px solid rgba(61,142,240,0.5);
+}
+.next-dose::before { content:''; position:absolute; top:-16px; right:-16px; width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,0.08); }
+.nd-lbl { font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.6); margin-bottom:3px; }
+.nd-name { font-size:16px; font-weight:700; color:white; margin-bottom:2px; }
+.nd-sub { font-size:11px; color:rgba(255,255,255,0.65); margin-bottom:12px; }
+.nd-btns { display:flex; gap:8px; }
+.nd-btn { flex:1; padding:10px; border-radius:10px; font-family:var(--sans); font-size:12px; font-weight:700; border:none; cursor:pointer; transition:all 0.15s; }
+.nd-p { background:white; color:var(--blue); }
+.nd-p:hover { background:#F0F6FF; }
+.nd-s { background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.2); }
+.nd-s:hover { background:rgba(255,255,255,0.22); }
+
+/* dose rows */
+.dose-list { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
+.dose-row {
+  display:flex; align-items:center; gap:11px;
+  padding:11px 13px; border-radius:13px;
+  border:1px solid var(--ink-06); background:var(--white);
+  cursor:pointer; transition:all 0.18s;
+}
+.dose-row:hover { border-color:rgba(0,99,195,0.25); transform:translateX(3px); }
+.dose-row.taken { opacity:0.5; }
+.d-pip { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.d-name { font-size:12px; font-weight:700; color:var(--ink); flex:1; }
+.d-sub { font-size:10px; color:var(--ink-35); margin-top:1px; }
+.d-time { font-size:10px; color:var(--ink-35); }
+.d-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; }
+.db-taken { background:var(--green-l); color:var(--green); }
+.db-due   { background:var(--blue-l); color:var(--blue-d); }
+.db-later { background:var(--surface-2); color:var(--ink-35); }
+
+/* AI insight */
+.ai-card {
+  background:linear-gradient(135deg,#EEF5FF,#E6F0FD);
+  border:1px solid rgba(0,99,195,0.15);
+  border-radius:14px; padding:13px;
+  display:flex; gap:10px; margin-bottom:13px;
+}
+.ai-icon { width:30px; height:30px; border-radius:9px; background:var(--blue); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; color:white; }
+.ai-tag { font-size:8px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--blue); margin-bottom:2px; }
+.ai-txt { font-size:11px; font-weight:500; color:var(--ink); line-height:1.55; }
+.ai-link { font-size:11px; font-weight:600; color:var(--blue); margin-top:5px; cursor:pointer; }
+
+/* chart */
+.chart-wrap { background:var(--white); border:1px solid var(--ink-06); border-radius:14px; padding:13px; margin-bottom:13px; }
+.chart-bars { display:flex; gap:6px; align-items:flex-end; height:56px; margin:10px 0 7px; }
+.bc { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
+.bf { width:100%; border-radius:4px 4px 0 0; min-height:4px; }
+.bl { font-size:9px; color:var(--ink-35); font-weight:600; }
+
+/* cost alert */
+.cost-alert { background:var(--amber-l); border:1px solid rgba(217,119,6,0.2); border-radius:13px; padding:13px 15px; display:flex; gap:10px; }
+.ca-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+.ca-title { font-size:12px; font-weight:700; color:#4A3000; margin-bottom:2px; }
+.ca-body { font-size:11px; color:#7A5010; line-height:1.5; }
+.ca-link { font-size:11px; font-weight:700; color:var(--amber); margin-top:4px; cursor:pointer; display:block; }
+
+/* ═══════════════════════════════════
+   SCREEN 5 — LEARN
+═══════════════════════════════════ */
+.learn-streak { background:rgba(255,255,255,0.1); border-radius:10px; padding:8px 11px; text-align:center; }
+.ls-n { font-size:18px; font-weight:700; color:var(--blue-m); }
+.ls-l { font-size:8px; color:rgba(255,255,255,0.4); }
+
+.continue-card {
+  background:rgba(255,255,255,0.08); border-radius:13px; padding:11px;
+  display:flex; gap:11px; align-items:center;
+  border:1px solid rgba(255,255,255,0.12);
+}
+.cc-icon { width:36px; height:36px; border-radius:10px; background:var(--blue); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.cc-lbl { font-size:8px; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1px; }
+.cc-title { font-size:12px; font-weight:700; color:white; }
+.cc-prog { font-size:9px; color:rgba(255,255,255,0.45); margin-top:2px; }
+.cc-bar { height:2px; background:rgba(255,255,255,0.15); border-radius:1px; margin-top:5px; }
+.cc-bar-f { height:100%; border-radius:1px; background:var(--blue-m); }
+
+.cat-row { display:flex; gap:7px; overflow-x:auto; margin-bottom:13px; scrollbar-width:none; padding-bottom:1px; }
+.cat-row::-webkit-scrollbar { display:none; }
+.cat-chip { padding:6px 13px; border-radius:14px; white-space:nowrap; font-size:11px; font-weight:600; cursor:pointer; border:1.5px solid var(--ink-10); background:transparent; color:var(--ink-60); transition:all 0.15s; }
+.cat-chip.on { background:var(--blue); color:white; border-color:var(--blue); }
+
+.quiz-bar {
+  background:linear-gradient(135deg,var(--purple-l),#EDE8FE);
+  border:1px solid rgba(124,58,237,0.2); border-radius:14px;
+  padding:13px; display:flex; gap:11px; align-items:center; margin-bottom:13px;
+}
+.qb-t { font-size:12px; font-weight:700; color:#3B1F9C; margin-bottom:2px; }
+.qb-s { font-size:10px; color:#6D4BC0; }
+.qb-btn { margin-left:auto; background:var(--purple); color:white; border:none; border-radius:9px; padding:7px 13px; font-family:var(--sans); font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
+
+.lesson-card { background:var(--white); border:1px solid var(--ink-06); border-radius:15px; overflow:hidden; margin-bottom:9px; cursor:pointer; transition:all 0.2s; }
+.lesson-card:hover { border-color:rgba(0,99,195,0.25); transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,99,195,0.08); }
+.lc-inner { padding:12px; display:flex; gap:11px; }
+.lc-icon { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.lc-tag { font-size:8px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; margin-bottom:2px; }
+.lc-title { font-size:12px; font-weight:700; color:var(--ink); line-height:1.35; margin-bottom:3px; }
+.lc-meta { font-size:10px; color:var(--ink-35); }
+.lc-prog-wrap { padding:0 12px 10px; }
+.lc-prog-t { height:3px; background:var(--surface-2); border-radius:2px; }
+.lc-prog-f { height:100%; border-radius:2px; background:var(--blue); }
+
+/* ═══════════════════════════════════
+   SCREEN 6 — MOOD
+═══════════════════════════════════ */
+.mood-ci {
+  background:rgba(255,255,255,0.07); border-radius:14px; padding:15px;
+  border:1px solid rgba(255,255,255,0.12); text-align:center;
+}
+.mci-q { font-size:13px; font-weight:700; color:white; margin-bottom:4px; }
+.mci-s { font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:14px; }
+.mci-faces { display:flex; justify-content:space-around; }
+.mcf { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:8px; border-radius:12px; transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+.mcf:hover { background:rgba(255,255,255,0.08); }
+.mcf.on { background:rgba(255,255,255,0.14); transform:scale(1.15); }
+.mcf-e { font-size:24px; }
+.mcf-l { font-size:8px; color:rgba(255,255,255,0.4); font-weight:600; }
+
+.mood-chart { background:var(--white); border:1px solid var(--ink-06); border-radius:14px; padding:13px; margin-bottom:10px; }
+.mc-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.mc-t { font-size:12px; font-weight:700; color:var(--ink); }
+.mc-p { font-size:11px; color:var(--ink-35); }
+.mood-svg { height:52px; }
+.mood-svg svg { width:100%; height:100%; }
+.chart-leg { display:flex; gap:11px; margin-top:6px; }
+.cl-i { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--ink-35); font-weight:500; }
+.cl-line { width:12px; height:2px; border-radius:1px; }
+
+.insight-card { border-radius:12px; padding:11px 13px; display:flex; gap:9px; margin-bottom:9px; border:1px solid transparent; }
+.ic-icon { font-size:16px; flex-shrink:0; }
+.ic-title { font-size:12px; font-weight:700; margin-bottom:2px; }
+.ic-body { font-size:11px; line-height:1.55; }
+
+.se-row { background:var(--white); border-radius:12px; border:1px solid var(--ink-06); padding:10px 13px; display:flex; align-items:center; gap:10px; margin-bottom:7px; cursor:pointer; transition:border-color 0.15s; }
+.se-row:hover { border-color:rgba(0,99,195,0.25); }
+.se-pip { width:8px; height:8px; border-radius:50%; }
+.se-nm { flex:1; font-size:12px; font-weight:700; color:var(--ink); }
+.se-freq { font-size:10px; color:var(--ink-35); }
+.se-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; }
+.sb-mild { background:var(--amber-l); color:var(--amber); }
+.sb-ok   { background:var(--green-l); color:var(--green); }
+
+/* ═══════════════════════════════════
+   SCREEN 7 — CARE
+═══════════════════════════════════ */
+.hcp-glass { background:rgba(255,255,255,0.08); border-radius:14px; padding:12px; display:flex; align-items:center; gap:12px; border:1px solid rgba(255,255,255,0.12); }
+.hcp-av { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#2ACEA0,var(--green)); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.hcp-nm { font-size:13px; font-weight:700; color:white; }
+.hcp-rl { font-size:10px; color:rgba(255,255,255,0.45); }
+.hcp-st { margin-left:auto; font-size:10px; font-weight:700; padding:3px 9px; border-radius:7px; background:rgba(22,163,90,0.22); color:#4ADDA0; }
+
+.report-card { background:var(--white); border-radius:15px; border:1px solid var(--ink-06); padding:14px; margin-bottom:12px; }
+.rc-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.rc-t { font-size:13px; font-weight:700; color:var(--ink); }
+.rc-btn { font-size:11px; font-weight:700; padding:5px 11px; border-radius:8px; border:none; background:var(--blue-l); color:var(--blue); cursor:pointer; }
+.rc-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; }
+.rc-stat { text-align:center; padding:10px 8px; background:var(--surface); border-radius:10px; }
+.rc-val { font-size:20px; font-weight:900; letter-spacing:-0.02em; }
+.rc-lbl { font-size:9px; color:var(--ink-35); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px; font-weight:700; }
+
+.cg-row { background:var(--white); border-radius:12px; border:1px solid var(--ink-06); padding:11px 13px; display:flex; align-items:center; gap:11px; margin-bottom:7px; }
+.cg-av { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.cg-nm { font-size:12px; font-weight:700; color:var(--ink); }
+.cg-rl { font-size:10px; color:var(--ink-35); }
+.cg-notif { margin-left:auto; font-size:10px; font-weight:700; color:var(--green); }
+
+.sav-card { background:var(--white); border-radius:14px; border:1px solid var(--ink-06); padding:13px; }
+.sav-row { display:flex; align-items:center; gap:9px; padding:9px 0; border-bottom:1px solid var(--ink-06); }
+.sav-row:last-child { border-bottom:none; padding-bottom:0; }
+.sav-icon { font-size:15px; }
+.sav-t { font-size:11px; font-weight:700; color:var(--ink); flex:1; }
+.sav-s { font-size:10px; color:var(--ink-35); }
+.sav-amt { font-size:11px; font-weight:700; color:var(--green); }
+.sav-pend { font-size:10px; font-weight:700; color:var(--amber); }
+
+/* ═══════════════════════════════════
+   SUCCESS SCREEN
+═══════════════════════════════════ */
+#s-success {
+  background:linear-gradient(175deg,#06122A 0%,#0D1E3E 50%,#080E1C 100%);
+}
+.success-inner {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center;
+  padding:70px 28px 80px; min-height:100%;
+}
+.succ-ring {
+  width:88px; height:88px; border-radius:50%;
+  background:linear-gradient(135deg,var(--blue-m),var(--blue));
+  box-shadow:0 0 50px rgba(0,99,195,0.55);
+  display:flex; align-items:center; justify-content:center;
+  font-size:36px; margin-bottom:24px;
+  animation:pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes pop-in { from{opacity:0;transform:scale(0.4)} to{opacity:1;transform:scale(1)} }
+.succ-h { font-size:28px; font-weight:900; color:white; letter-spacing:-0.02em; margin-bottom:10px; line-height:1.1; }
+.succ-h span { color:var(--blue-m); }
+.succ-p { font-size:13px; color:rgba(255,255,255,0.45); line-height:1.7; margin-bottom:28px; }
+.succ-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; width:100%; margin-bottom:28px; }
+.ss-box { background:rgba(255,255,255,0.07); border-radius:14px; padding:14px 6px; border:1px solid rgba(255,255,255,0.09); }
+.ss-val { font-size:24px; font-weight:900; color:var(--blue-m); letter-spacing:-0.02em; }
+.ss-lbl { font-size:8px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; margin-top:3px; font-weight:700; }
+
+/* ═══════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════ */
+@keyframes fade-up {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.fade-1 { animation:fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+.fade-2 { animation:fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+.fade-3 { animation:fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.25s both; }
+.fade-4 { animation:fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.35s both; }
+
+/* ═══════════════════════════════════
+   TOAST NOTIFICATION
+═══════════════════════════════════ */
+.toast {
+  position:absolute; top:56px; left:12px; right:12px;
+  background:rgba(15,23,42,0.95); backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1); border-radius:16px;
+  padding:13px 15px; display:flex; align-items:center; gap:11px;
+  z-index:300; opacity:0; transform:translateY(-10px);
+  transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateY(0); }
+.toast-icon { font-size:20px; }
+.toast-title { font-size:13px; font-weight:700; color:white; }
+.toast-body { font-size:11px; color:rgba(255,255,255,0.55); }
+.toast-time { font-size:10px; color:rgba(255,255,255,0.3); margin-left:auto; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- ── PHONE ── -->
+  <div class="phone">
+    <div class="status">
+      <span class="st-time" id="clock">9:41</span>
+      <span class="st-icons">▲ 🔋</span>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+      <div class="toast-icon">💊</div>
+      <div><div class="toast-title">Time for Metformin 500mg</div><div class="toast-body">With lunch · Due in 15 min</div></div>
+      <div class="toast-time">now</div>
+    </div>
+
+    <div class="screens">
+
+      <!-- SPLASH -->
+      <div class="screen active" id="s-splash">
+        <div class="splash-inner">
+          <div class="splash-orb">💊</div>
+          <div class="splash-logo">MedCompanion</div>
+          <div class="splash-tag">MEDICATION · ADHERENCE · PLATFORM</div>
+          <h1 class="splash-h">Your health,<br><span>your language,</span><br>your pace.</h1>
+          <p class="splash-p">Designed for the patient every existing app forgot. Plain language, 50+ languages, mood-aware reminders.</p>
+          <div class="splash-chips">
+            <span class="splash-chip">50+ Languages</span>
+            <span class="splash-chip">Health Literacy First</span>
+            <span class="splash-chip">Free Forever</span>
+          </div>
+          <button class="btn-splash" onclick="goScreen('lang')">Get started →</button>
+          <div class="splash-sign" onclick="goScreen('today')">Already have an account? Sign in</div>
+        </div>
+      </div>
+
+      <!-- LANGUAGE -->
+      <div class="screen" id="s-lang">
+        <div class="ob-inner">
+          <button class="ob-back" onclick="goScreen('splash')">← Back</button>
+          <div class="ob-step">Step 1 of 4</div>
+          <h2 class="ob-h">Choose your <em>language</em></h2>
+          <p class="ob-p">We show everything in the language you're most comfortable with — including all education and drug information.</p>
+          <div class="lang-grid">
+            <div class="lang-chip on" onclick="pickLang(this)"><span class="lang-flag">🇮🇳</span><div><div class="lang-nm">English</div><div class="lang-nat">English</div></div><div class="lang-chk">✓</div></div>
+            <div class="lang-chip" onclick="pickLang(this)"><span class="lang-flag">🇮🇳</span><div><div class="lang-nm">Hindi</div><div class="lang-nat">हिन्दी</div></div><div class="lang-chk">✓</div></div>
+            <div class="lang-chip" onclick="pickLang(this)"><span class="lang-flag">🇮🇳</span><div><div class="lang-nm">Tamil</div><div class="lang-nat">தமிழ்</div></div><div class="lang-chk">✓</div></div>
+            <div class="lang-chip" onclick="pickLang(this)"><span class="lang-flag">🇧🇷</span><div><div class="lang-nm">Portuguese</div><div class="lang-nat">Português</div></div><div class="lang-chk">✓</div></div>
+            <div class="lang-chip" onclick="pickLang(this)"><span class="lang-flag">🇸🇦</span><div><div class="lang-nm">Arabic</div><div class="lang-nat">العربية</div></div><div class="lang-chk">✓</div></div>
+            <div class="lang-chip" onclick="pickLang(this)"><span class="lang-flag">🌐</span><div><div class="lang-nm">More</div><div class="lang-nat">50+ languages</div></div><div class="lang-chk">✓</div></div>
+          </div>
+          <div class="lit-section">
+            <div class="lit-label">How do you prefer information?</div>
+            <div class="lit-stack">
+              <div class="lit-row on" onclick="pickLit(this)"><span class="lit-icon">🖼️</span><span class="lit-txt">Simple words + pictures</span></div>
+              <div class="lit-row" onclick="pickLit(this)"><span class="lit-icon">📖</span><span class="lit-txt">Detailed explanations</span></div>
+              <div class="lit-row" onclick="pickLit(this)"><span class="lit-icon">🎧</span><span class="lit-txt">Audio narration</span></div>
+            </div>
+          </div>
+          <button class="ob-btn" onclick="goScreen('cond')">Continue</button>
+        </div>
+      </div>
+
+      <!-- CONDITIONS -->
+      <div class="screen" id="s-cond">
+        <div class="ob-inner">
+          <button class="ob-back" onclick="goScreen('lang')">← Back</button>
+          <div class="ob-step">Step 2 of 4</div>
+          <h2 class="ob-h">What are you <em>managing?</em></h2>
+          <p class="ob-p">Select all that apply. We tailor your reminders, education, and cost savings to your specific conditions.</p>
+          <div class="cond-stack">
+            <div class="cond-row on" onclick="toggleCond(this)"><span class="cond-em">🩸</span><div class="cond-info"><div class="cond-nm">Type 2 Diabetes</div><div class="cond-sub">Blood sugar management</div></div><div class="cond-box">✓</div></div>
+            <div class="cond-row on" onclick="toggleCond(this)"><span class="cond-em">❤️</span><div class="cond-info"><div class="cond-nm">Hypertension</div><div class="cond-sub">High blood pressure</div></div><div class="cond-box">✓</div></div>
+            <div class="cond-row" onclick="toggleCond(this)"><span class="cond-em">🫁</span><div class="cond-info"><div class="cond-nm">Asthma / COPD</div><div class="cond-sub">Respiratory conditions</div></div><div class="cond-box"></div></div>
+            <div class="cond-row" onclick="toggleCond(this)"><span class="cond-em">🧠</span><div class="cond-info"><div class="cond-nm">Mental health</div><div class="cond-sub">Depression, anxiety, bipolar</div></div><div class="cond-box"></div></div>
+            <div class="cond-row" onclick="toggleCond(this)"><span class="cond-em">🦴</span><div class="cond-info"><div class="cond-nm">Arthritis</div><div class="cond-sub">Joint pain management</div></div><div class="cond-box"></div></div>
+            <div class="cond-row" onclick="toggleCond(this)"><span class="cond-em">➕</span><div class="cond-info"><div class="cond-nm">Add custom condition</div></div><div class="cond-box"></div></div>
+          </div>
+          <button class="ob-btn" onclick="goScreen('meds')" id="cond-btn" style="margin-top:18px">Continue with 2 conditions</button>
+        </div>
+      </div>
+
+      <!-- MEDICATIONS -->
+      <div class="screen" id="s-meds">
+        <div class="ob-inner">
+          <button class="ob-back" onclick="goScreen('cond')">← Back</button>
+          <div class="ob-step">Step 3 of 4</div>
+          <h2 class="ob-h">Add your <em>medications</em></h2>
+          <p class="ob-p">Add what you're currently taking. You can add more anytime from your dashboard.</p>
+          <div class="med-card-ob">
+            <div class="mc-head"><div class="mc-pip" style="background:#0063C3"></div><div class="mc-name">Metformin 500mg</div><button class="mc-remove">×</button></div>
+            <div class="mc-grid">
+              <div class="mc-fld"><div class="mc-lbl">Frequency</div><div class="mc-val">Twice daily</div></div>
+              <div class="mc-fld"><div class="mc-lbl">With food?</div><div class="mc-val">With meal</div></div>
+              <div class="mc-fld"><div class="mc-lbl">Prescribed by</div><div class="mc-val">Dr. Sharma</div></div>
+              <div class="mc-fld"><div class="mc-lbl">Refill date</div><div class="mc-val">01/05/26</div></div>
+            </div>
+          </div>
+          <div class="med-card-ob">
+            <div class="mc-head"><div class="mc-pip" style="background:#7C3AED"></div><div class="mc-name">Lisinopril 10mg</div><button class="mc-remove">×</button></div>
+            <div class="mc-grid">
+              <div class="mc-fld"><div class="mc-lbl">Frequency</div><div class="mc-val">Once daily</div></div>
+              <div class="mc-fld"><div class="mc-lbl">With food?</div><div class="mc-val">Anytime</div></div>
+              <div class="mc-fld"><div class="mc-lbl">Prescribed by</div><div class="mc-val">Dr. Sharma</div></div>
+              <div class="mc-fld"><div class="mc-lbl">Refill date</div><div class="mc-val">15/04/26</div></div>
+            </div>
+          </div>
+          <button class="add-med-btn">＋ Add another medication</button>
+          <button class="ob-btn" onclick="goScreen('success')" style="margin-top:14px">Finish setup →</button>
+          <button class="ob-skip" onclick="goScreen('success')">Skip for now</button>
+        </div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="screen" id="s-success">
+        <div class="success-inner">
+          <div class="succ-ring">✓</div>
+          <h2 class="succ-h">You're all set,<br><span>Priya!</span></h2>
+          <p class="succ-p">Your personalised medication companion is ready. Here's everything set up for you today:</p>
+          <div class="succ-stats">
+            <div class="ss-box"><div class="ss-val">2</div><div class="ss-lbl">Conditions tracked</div></div>
+            <div class="ss-box"><div class="ss-val">3</div><div class="ss-lbl">Daily reminders</div></div>
+            <div class="ss-box"><div class="ss-val">2</div><div class="ss-lbl">Savings found</div></div>
+          </div>
+          <button class="btn-splash" onclick="goScreen('today')">Open my dashboard →</button>
+        </div>
+      </div>
+
+      <!-- TODAY -->
+      <div class="screen" id="s-today">
+        <div class="hdr hdr-today">
+          <div class="hdr-top">
+            <div><div class="hdr-greet">Good afternoon</div><div class="hdr-name">Priya 👋</div></div>
+            <div class="hdr-av">PS</div>
+          </div>
+          <div class="glass ring-card">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 60 60"><circle class="r-bg" cx="30" cy="30" r="25"/><circle class="r-fill" cx="30" cy="30" r="25"/></svg>
+              <div class="ring-ctr"><div class="ring-pct">87%</div><div class="ring-lbl">this week</div></div>
+            </div>
+            <div class="ring-meta">
+              <h3>Great progress!</h3>
+              <p>13 of 15 doses · 2-day streak 🔥</p>
+              <div class="streak-row">
+                <div class="spip done">M</div><div class="spip done">T</div><div class="spip done">W</div>
+                <div class="spip done">T</div><div class="spip today">F</div><div class="spip">S</div><div class="spip">S</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="next-dose fade-1">
+            <div class="nd-lbl">Next dose</div>
+            <div class="nd-name">Metformin 500mg</div>
+            <div class="nd-sub">With lunch · Due in 15 min</div>
+            <div class="nd-btns">
+              <button class="nd-btn nd-p" id="take-btn" onclick="takeDose()">✓ Mark as taken</button>
+              <button class="nd-btn nd-s" onclick="snoozeBtn()">Snooze</button>
+            </div>
+          </div>
+          <div class="sec fade-2"><span class="sec-t">Today's schedule</span><span class="sec-l">View all</span></div>
+          <div class="dose-list fade-2">
+            <div class="dose-row taken"><div class="d-pip" style="background:#0063C3"></div><div><div class="d-name">Lisinopril 10mg</div><div class="d-sub">Once daily</div></div><div class="d-time">8AM</div><div class="d-badge db-taken">✓ Taken</div></div>
+            <div class="dose-row"><div class="d-pip" style="background:#D97706"></div><div><div class="d-name">Metformin 500mg</div><div class="d-sub">Twice daily · with meal</div></div><div class="d-time">1PM</div><div class="d-badge db-due">Due soon</div></div>
+            <div class="dose-row"><div class="d-pip" style="background:#7C3AED"></div><div><div class="d-name">Atorvastatin 20mg</div><div class="d-sub">Once daily</div></div><div class="d-time">9PM</div><div class="d-badge db-later">Tonight</div></div>
+          </div>
+          <div class="ai-card fade-3">
+            <div class="ai-icon">✦</div>
+            <div><div class="ai-tag">AI Insight</div><div class="ai-txt">You tend to miss Thursday afternoon doses. Want a different reminder style that day?</div><div class="ai-link">Adjust Thursday reminder →</div></div>
+          </div>
+          <div class="chart-wrap fade-3">
+            <div class="sec"><span class="sec-t">This week</span><span class="sec-l">28-day view</span></div>
+            <div class="chart-bars" id="chart-bars"></div>
+          </div>
+          <div class="cost-alert fade-4">
+            <div class="ca-icon">💰</div>
+            <div><div class="ca-title">Refill due in 7 days</div><div class="ca-body">Metformin found ₹120 cheaper at Apollo Pharmacy (2.1km away).</div><span class="ca-link">See price comparison →</span></div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item on" onclick="switchTab('today',0)"><div class="nav-icon">🏠</div><div class="nav-label">Today</div></div>
+          <div class="nav-item" onclick="switchTab('learn',1)"><div class="nav-icon">📖</div><div class="nav-label">Learn</div></div>
+          <div class="nav-item" onclick="switchTab('mood',2)"><div class="nav-icon">💙</div><div class="nav-label">Mood</div></div>
+          <div class="nav-item" onclick="switchTab('care',3)"><div class="nav-icon">👥</div><div class="nav-label">Care</div></div>
+        </div>
+      </div>
+
+      <!-- LEARN -->
+      <div class="screen" id="s-learn">
+        <div class="hdr hdr-learn">
+          <div class="hdr-top">
+            <div><div class="hdr-greet">Learning journey</div><div class="hdr-name">Your education</div></div>
+            <div class="learn-streak"><div class="ls-n">5</div><div class="ls-l">day streak</div></div>
+          </div>
+          <div class="continue-card">
+            <div class="cc-icon">🩸</div>
+            <div style="flex:1"><div class="cc-lbl">Continue lesson</div><div class="cc-title">Managing blood sugar with food</div><div class="cc-prog">Module 3 of 5 · 4 min left</div><div class="cc-bar"><div class="cc-bar-f" style="width:60%"></div></div></div>
+            <div style="color:rgba(255,255,255,0.35);font-size:15px">›</div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="cat-row">
+            <div class="cat-chip on">All</div>
+            <div class="cat-chip">Diabetes</div>
+            <div class="cat-chip">Heart health</div>
+            <div class="cat-chip">Side effects</div>
+            <div class="cat-chip">Lifestyle</div>
+          </div>
+          <div class="quiz-bar">
+            <div style="font-size:22px">🎯</div>
+            <div><div class="qb-t">Quick knowledge check</div><div class="qb-s">Test what you learned about Metformin</div></div>
+            <button class="qb-btn">Start quiz</button>
+          </div>
+          <div class="sec"><span class="sec-t">Recommended for you</span></div>
+          <div class="lesson-card"><div class="lc-inner"><div class="lc-icon" style="background:#EEF5FF">💊</div><div><div class="lc-tag" style="color:#0063C3">Your medication</div><div class="lc-title">Why Metformin works — in simple words</div><div class="lc-meta">5 min · Simple language · 🎧 Audio</div></div></div><div class="lc-prog-wrap"><div class="lc-prog-t"><div class="lc-prog-f" style="width:70%"></div></div></div></div>
+          <div class="lesson-card"><div class="lc-inner"><div class="lc-icon" style="background:#FEF0EE">⚠️</div><div><div class="lc-tag" style="color:#E8574A">Side effects</div><div class="lc-title">Managing nausea from Metformin</div><div class="lc-meta">3 min · Visual guide</div></div></div><div class="lc-prog-wrap"><div class="lc-prog-t"><div class="lc-prog-f" style="width:0%"></div></div></div></div>
+          <div class="lesson-card"><div class="lc-inner"><div class="lc-icon" style="background:#E0F5E9">❤️</div><div><div class="lc-tag" style="color:#16A35A">Heart health</div><div class="lc-title">Blood pressure & your daily routine</div><div class="lc-meta">7 min · Interactive · Tamil available</div></div></div><div class="lc-prog-wrap"><div class="lc-prog-t"><div class="lc-prog-f" style="width:100%"></div></div></div></div>
+          <div class="lesson-card"><div class="lc-inner"><div class="lc-icon" style="background:#FEF5E0">🍽️</div><div><div class="lc-tag" style="color:#D97706">Lifestyle</div><div class="lc-title">Foods that help (and hurt) your blood sugar</div><div class="lc-meta">6 min · Detailed read</div></div></div><div class="lc-prog-wrap"><div class="lc-prog-t"><div class="lc-prog-f" style="width:0%"></div></div></div></div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item" onclick="switchTab('today',0)"><div class="nav-icon">🏠</div><div class="nav-label">Today</div></div>
+          <div class="nav-item on" onclick="switchTab('learn',1)"><div class="nav-icon">📖</div><div class="nav-label">Learn</div></div>
+          <div class="nav-item" onclick="switchTab('mood',2)"><div class="nav-icon">💙</div><div class="nav-label">Mood</div></div>
+          <div class="nav-item" onclick="switchTab('care',3)"><div class="nav-icon">👥</div><div class="nav-label">Care</div></div>
+        </div>
+      </div>
+
+      <!-- MOOD -->
+      <div class="screen" id="s-mood">
+        <div class="hdr hdr-mood">
+          <div class="hdr-top">
+            <div><div class="hdr-greet">Wellbeing check-in</div><div class="hdr-name">How are you?</div></div>
+            <div style="background:rgba(124,58,237,0.25);border-radius:10px;padding:7px 10px;text-align:center"><div style="font-size:17px;font-weight:700;color:#C4A8FF">12</div><div style="font-size:8px;color:rgba(255,255,255,0.4)">day streak</div></div>
+          </div>
+          <div class="mood-ci">
+            <div class="mci-q">How's your medication feeling today?</div>
+            <div class="mci-s">Helps us spot mood–adherence patterns early</div>
+            <div class="mci-faces">
+              <div class="mcf" onclick="pickMood(this)"><span class="mcf-e">😟</span><span class="mcf-l">Low</span></div>
+              <div class="mcf" onclick="pickMood(this)"><span class="mcf-e">😐</span><span class="mcf-l">Neutral</span></div>
+              <div class="mcf on" onclick="pickMood(this)"><span class="mcf-e">🙂</span><span class="mcf-l">Okay</span></div>
+              <div class="mcf" onclick="pickMood(this)"><span class="mcf-e">😊</span><span class="mcf-l">Good</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="mood-chart">
+            <div class="mc-hd"><span class="mc-t">7-day mood vs adherence</span><span class="mc-p">This week</span></div>
+            <div class="mood-svg">
+              <svg viewBox="0 0 300 52" preserveAspectRatio="none">
+                <polyline points="0,44 43,36 86,26 129,38 172,20 215,16 258,22 300,18" fill="none" stroke="#0063C3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="0,48 43,46 86,50 129,43 172,52 215,47 258,45 300,41" fill="none" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3" opacity=".7"/>
+                <circle cx="300" cy="18" r="3" fill="#0063C3"/>
+              </svg>
+            </div>
+            <div class="chart-leg">
+              <div class="cl-i"><div class="cl-line" style="background:#0063C3"></div>Mood</div>
+              <div class="cl-i"><div class="cl-line" style="background:#D97706;opacity:.7"></div>Adherence</div>
+            </div>
+          </div>
+          <div class="sec"><span class="sec-t">Your patterns</span></div>
+          <div class="insight-card" style="background:#EEF5FF;border-color:rgba(0,99,195,0.15)"><span class="ic-icon">✦</span><div><div class="ic-title" style="color:#004A96">Thursday pattern detected</div><div class="ic-body" style="color:#1B5FA0">Mood dips on Thursdays match 3 of last 5 missed doses. This may be intentional avoidance.</div></div></div>
+          <div class="insight-card" style="background:#E0F5E9;border-color:rgba(22,163,90,0.2)"><span class="ic-icon">🎉</span><div><div class="ic-title" style="color:#0A5C35">Good days: 94% adherence</div><div class="ic-body" style="color:#1A7A50">On lower mood days this drops to 61%. Wellbeing and adherence are directly linked for you.</div></div></div>
+          <div class="sec" style="margin-top:4px"><span class="sec-t">Side effect log</span><span class="sec-l">+ Log new</span></div>
+          <div class="se-row"><div class="se-pip" style="background:#D97706"></div><div class="se-nm">Mild nausea</div><div class="se-freq">after morning dose</div><div class="se-badge sb-mild">Mild</div></div>
+          <div class="se-row"><div class="se-pip" style="background:#16A35A"></div><div class="se-nm">Dizziness</div><div class="se-freq">2 weeks ago</div><div class="se-badge sb-ok">Resolved</div></div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item" onclick="switchTab('today',0)"><div class="nav-icon">🏠</div><div class="nav-label">Today</div></div>
+          <div class="nav-item" onclick="switchTab('learn',1)"><div class="nav-icon">📖</div><div class="nav-label">Learn</div></div>
+          <div class="nav-item on" onclick="switchTab('mood',2)"><div class="nav-icon">💙</div><div class="nav-label">Mood</div></div>
+          <div class="nav-item" onclick="switchTab('care',3)"><div class="nav-icon">👥</div><div class="nav-label">Care</div></div>
+        </div>
+      </div>
+
+      <!-- CARE -->
+      <div class="screen" id="s-care">
+        <div class="hdr hdr-care">
+          <div class="hdr-top">
+            <div><div class="hdr-greet">Connected support</div><div class="hdr-name">Care team</div></div>
+          </div>
+          <div class="hcp-glass"><div class="hcp-av">👨‍⚕️</div><div><div class="hcp-nm">Dr. R. Sharma</div><div class="hcp-rl">Endocrinologist · Apollo Hospital</div></div><div class="hcp-st">Connected</div></div>
+        </div>
+        <div class="body">
+          <div class="report-card">
+            <div class="rc-hd"><span class="rc-t">Monthly adherence report</span><button class="rc-btn">Share with doctor</button></div>
+            <div class="rc-grid">
+              <div class="rc-stat"><div class="rc-val" style="color:#0063C3">87%</div><div class="rc-lbl">Adherence</div></div>
+              <div class="rc-stat"><div class="rc-val" style="color:#D97706">3</div><div class="rc-lbl">Missed</div></div>
+              <div class="rc-stat"><div class="rc-val" style="color:#16A35A">26</div><div class="rc-lbl">Days</div></div>
+            </div>
+          </div>
+          <div class="sec"><span class="sec-t">Care circle</span><span class="sec-l">Manage</span></div>
+          <div class="cg-row"><div class="cg-av" style="background:#D6E8F9">👩</div><div><div class="cg-nm">Meena (Mother)</div><div class="cg-rl">Gets missed-dose alerts</div></div><div class="cg-notif">Notified today</div></div>
+          <div class="cg-row" style="margin-bottom:14px"><div class="cg-av" style="background:#D4F5E7">👨</div><div><div class="cg-nm">Raj (Husband)</div><div class="cg-rl">Weekly summary</div></div><div style="margin-left:auto;font-size:11px;color:var(--ink-35)">All good 👍</div></div>
+          <div class="sec"><span class="sec-t">Active savings</span><span class="sec-l">Full report</span></div>
+          <div class="sav-card">
+            <div class="sav-row"><span class="sav-icon">💊</span><div><div class="sav-t">Metformin generic switch</div><div class="sav-s">Same ingredient · Approved by Dr. Sharma</div></div><div class="sav-amt">-₹340/mo</div></div>
+            <div class="sav-row"><span class="sav-icon">🏥</span><div><div class="sav-t">Copay assistance — Lisinopril</div><div class="sav-s">Eligibility confirmed</div></div><div class="sav-amt">-₹180/mo</div></div>
+            <div class="sav-row"><span class="sav-icon">📋</span><div><div class="sav-t">Prior auth — Atorvastatin</div><div class="sav-s">Pending approval</div></div><div class="sav-pend">3 days</div></div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item" onclick="switchTab('today',0)"><div class="nav-icon">🏠</div><div class="nav-label">Today</div></div>
+          <div class="nav-item" onclick="switchTab('learn',1)"><div class="nav-icon">📖</div><div class="nav-label">Learn</div></div>
+          <div class="nav-item" onclick="switchTab('mood',2)"><div class="nav-icon">💙</div><div class="nav-label">Mood</div></div>
+          <div class="nav-item on" onclick="switchTab('care',3)"><div class="nav-icon">👥</div><div class="nav-label">Care</div></div>
+        </div>
+      </div>
+
+    </div><!-- /screens -->
+  </div><!-- /phone -->
+
+</div><!-- /shell -->
+
+<script>
+/* ── Clock ── */
+function tick(){
+  var now=new Date(),h=now.getHours()%12||12,m=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent=h+':'+m;
+}
+tick(); setInterval(tick,1000);
+
+/* ── Screen navigation ── */
+var currentScreen='splash';
+var VALID_SCREENS=['splash','lang','cond','meds','success','today','learn','mood','care'];
+
+function goScreen(name){
+  var old=document.getElementById('s-'+currentScreen);
+  var nxt=document.getElementById('s-'+name);
+  if(!nxt||name===currentScreen)return;
+  if(old){
+    old.classList.remove('active');
+    old.classList.add('out');
+    setTimeout(function(){ old.classList.remove('out'); },380);
+  }
+  nxt.style.transform='translateX(24px)'; nxt.style.opacity='0';
+  nxt.classList.add('active');
+  requestAnimationFrame(function(){nxt.style.transform=''; nxt.style.opacity='';});
+  currentScreen=name;
+  history.replaceState(null,'','#'+name);
+  setTimeout(function(){if(nxt)nxt.scrollTop=0;},40);
+}
+
+/* ── Tab nav ── */
+function switchTab(name){
+  goScreen(name);
+}
+
+window.addEventListener('load',function(){
+  var hashScreen=window.location.hash.replace('#','');
+
+  if(VALID_SCREENS.indexOf(hashScreen)!==-1 && hashScreen!==currentScreen){
+    goScreen(hashScreen);
+  } else {
+    history.replaceState(null,'','#splash');
+  }
+
+  var aiLink=document.querySelector('.ai-link');
+  if(aiLink){
+    aiLink.addEventListener('click',function(){
+      goScreen('mood');
+    });
+  }
+
+  var costLink=document.querySelector('.ca-link');
+  if(costLink){
+    costLink.addEventListener('click',function(){
+      goScreen('care');
+    });
+  }
+});
+
+window.addEventListener('hashchange',function(){
+  var hashScreen=window.location.hash.replace('#','');
+  if(VALID_SCREENS.indexOf(hashScreen)!==-1 && hashScreen!==currentScreen){
+    goScreen(hashScreen);
+  }
+});
+
+/* ── Chart ── */
+function buildChart(){
+  var data=[
+    {d:'Mon',p:100,c:'#0063C3'},{d:'Tue',p:67,c:'#0063C3'},{d:'Wed',p:100,c:'#0063C3'},
+    {d:'Thu',p:33,c:'#E8574A'},{d:'Fri',p:67,c:'#D97706'},{d:'Sat',p:0,c:'#EBF1F8'},{d:'Sun',p:0,c:'#EBF1F8'}
+  ];
+  var el=document.getElementById('chart-bars');
+  if(!el)return;
+  el.innerHTML=data.map(function(d){
+    return '<div class="bc"><div class="bf" style="height:'+Math.max(d.p*0.52,3)+'px;background:'+d.c+';opacity:'+(d.p>0?1:0.5)+'"></div><div class="bl">'+d.d+'</div></div>';
+  }).join('');
+}
+buildChart();
+
+/* ── Toast ── */
+setTimeout(function(){
+  var t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},5000);
+},1600);
+
+/* ── Interactions ── */
+function pickLang(el){
+  document.querySelectorAll('.lang-chip').forEach(function(c){c.classList.remove('on')});
+  el.classList.add('on');
+}
+function pickLit(el){
+  document.querySelectorAll('.lit-row').forEach(function(r){r.classList.remove('on')});
+  el.classList.add('on');
+}
+function toggleCond(el){
+  el.classList.toggle('on');
+  el.querySelector('.cond-box').textContent=el.classList.contains('on')?'✓':'';
+  var n=document.querySelectorAll('.cond-row.on').length;
+  var btn=document.getElementById('cond-btn');
+  if(btn)btn.textContent=n>0?'Continue with '+n+' condition'+(n>1?'s':''):'Continue';
+}
+function pickMood(el){
+  document.querySelectorAll('.mcf').forEach(function(f){f.classList.remove('on')});
+  el.classList.add('on');
+}
+function takeDose(){
+  var btn=document.getElementById('take-btn');
+  btn.textContent='✓ Taken!'; btn.style.background='#E0F5E9'; btn.style.color='#16A35A';
+  setTimeout(function(){btn.textContent='✓ Mark as taken';btn.style.background='';btn.style.color='';},2500);
+}
+function snoozeBtn(){
+  var s=document.querySelector('.nd-sub');
+  if(s){s.textContent='Snoozed 15 min — coming back soon';}
+  setTimeout(function(){if(s)s.textContent='With lunch · Due in 15 min';},2200);
+}
+</script>
+</body>
+</html>
